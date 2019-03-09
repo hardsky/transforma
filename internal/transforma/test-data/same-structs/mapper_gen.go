@@ -4,8 +4,7 @@ package sameStructs
 
 func mapAtoB(a *A) *B {
 	res := &B{}
-	res.
-		x = a.x
+	res.x = a.x
 	return res
 
 }

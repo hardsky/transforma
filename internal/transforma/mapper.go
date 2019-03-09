@@ -36,7 +36,7 @@ func (m *mapper) generate() {
 }
 
 func selectField(obj *ast.Ident, fl *ast.Field) *ast.SelectorExpr {
-	return &ast.SelectorExpr{X: obj, Sel: fl.Names[0]}
+	return &ast.SelectorExpr{X: obj, Sel: ast.NewIdent(fl.Names[0].Name)}
 }
 
 func findField(src *ast.StructType, same *ast.Field) *ast.Field {
