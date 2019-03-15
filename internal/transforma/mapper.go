@@ -3,6 +3,11 @@ package transforma
 import (
 	"go/ast"
 	"go/token"
+	"strings"
+)
+
+const (
+	tag = "trf"
 )
 
 type mapper struct {
@@ -39,12 +44,38 @@ func selectField(obj *ast.Ident, fl *ast.Field) *ast.SelectorExpr {
 	return &ast.SelectorExpr{X: obj, Sel: ast.NewIdent(fl.Names[0].Name)}
 }
 
-func findField(src *ast.StructType, same *ast.Field) *ast.Field {
+func findField(src *ast.StructType, left *ast.Field) *ast.Field {
+	rightName := nameFromTag(left)
+	if len(rightName) > 0 {
+		return findFieldByName(src, rightName)
+	}
+
+	leftName := left.Names[0].Name
+	fl := findFieldByTag(src, leftName)
+	if fl != nil {
+		return fl
+	}
+
+	return findFieldByName(src, leftName)
+}
+
+func findFieldByTag(src *ast.StructType, fieldName string) *ast.Field {
 	for _, fl := range src.Fields.List {
-		if same.Names[0].Name == fl.Names[0].Name {
+		name := nameFromTag(fl)
+		if name == fieldName {
 			return fl
 		}
 	}
+	return nil
+}
+
+func findFieldByName(src *ast.StructType, name string) *ast.Field {
+	for _, fl := range src.Fields.List {
+		if fl.Names[0].Name == name {
+			return fl
+		}
+	}
+
 	return nil
 }
 
@@ -58,3 +89,39 @@ func define(x *ast.Ident, tp *ast.Field) *ast.AssignStmt {
 	}
 	return &ast.AssignStmt{Lhs: []ast.Expr{x}, Tok: token.DEFINE, Rhs: []ast.Expr{right}}
 }
+
+func nameFromTag(fl *ast.Field) string {
+	if fl.Tag == nil {
+		return ""
+	}
+
+	tags := strings.Split(fl.Tag.Value, " ")
+	for _, t := range tags {
+		if strings.Contains(t, tag) {
+			kv := strings.Split(t, ":")
+			if len(kv) != 2 {
+				return ""
+			}
+
+			return strings.Trim(kv[1], "\"`")
+		}
+	}
+
+	return ""
+}
+
+// func conversion() ast.Stmt {
+// 	// Type-check the package.
+// 	// We create an empty map for each kind of input
+// 	// we're interested in, and Check populates them.
+// 	info := types.Info{
+// 		Types: make(map[ast.Expr]types.TypeAndValue),
+// 		Defs:  make(map[*ast.Ident]types.Object),
+// 		Uses:  make(map[*ast.Ident]types.Object),
+// 	}
+// 	var conf types.Config
+// 	pkg, err := conf.Check("fib", fset, []*ast.File{f}, &info)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
