@@ -37,7 +37,9 @@ func (m *mapper) generate() {
 		m.Fnc.Body.List = append(m.Fnc.Body.List, &assig)
 	}
 
-	m.Fnc.Body.List = append(m.Fnc.Body.List, &ast.ReturnStmt{Results: []ast.Expr{res}})
+	ret := &ast.ReturnStmt{Results: []ast.Expr{res}}
+	m.Fnc.Body.List = append(m.Fnc.Body.List, ret)
+	m.Fnc.Body.Rbrace = ret.End()
 }
 
 func selectField(obj *ast.Ident, fl *ast.Field) *ast.SelectorExpr {
