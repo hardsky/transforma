@@ -15,6 +15,7 @@ func TestGenerateAnyNames(t *testing.T) {
 		"any-names",
 		"one-file",
 		"same-structs",
+		"skip-field",
 	}
 
 	for _, c := range cases {

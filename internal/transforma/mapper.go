@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	tag = "trf"
+	tag      = "trf"
+	skipName = "-"
 )
 
 type mapper struct {
@@ -48,6 +49,10 @@ func selectField(obj *ast.Ident, fl *ast.Field) *ast.SelectorExpr {
 
 func findField(src *ast.StructType, left *ast.Field) *ast.Field {
 	rightName := nameFromTag(left)
+	if rightName == skipName {
+		return nil
+	}
+
 	if len(rightName) > 0 {
 		return findFieldByName(src, rightName)
 	}
@@ -58,7 +63,16 @@ func findField(src *ast.StructType, left *ast.Field) *ast.Field {
 		return fl
 	}
 
-	return findFieldByName(src, leftName)
+	rightField := findFieldByName(src, leftName)
+	if rightField == nil {
+		return nil
+	}
+
+	if nameFromTag(rightField) == skipName {
+		return nil
+	}
+
+	return rightField
 }
 
 func findFieldByTag(src *ast.StructType, fieldName string) *ast.Field {
