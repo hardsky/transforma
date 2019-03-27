@@ -1,6 +1,7 @@
 package transforma
 
 import (
+	"fmt"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -26,21 +27,39 @@ func (m *mapper) generate() {
 
 	dst := m.OutType
 	src := m.InType
+
+	imports := []string{}
 	for _, fl := range dst.Fields.List {
 		rightField := findField(src, fl)
 		if rightField == nil {
 			continue
 		}
 
-		left := selectField(res, fl)
-		right := selectField(m.In.Names[0], rightField)
-		assig := ast.AssignStmt{Lhs: []ast.Expr{left}, Tok: token.ASSIGN, Rhs: []ast.Expr{right}}
-		m.Fnc.Body.List = append(m.Fnc.Body.List, &assig)
+		conv := objectConverter{leftObj: res, rightObj: m.In.Names[0]}
+		m.Fnc.Body.List = append(m.Fnc.Body.List, conv.convert(fl, rightField))
+		usedImport := conv.usedImport()
+		if len(usedImport) > 0 {
+			imports = append(imports, usedImport)
+		}
 	}
 
 	ret := &ast.ReturnStmt{Results: []ast.Expr{res}}
 	m.Fnc.Body.List = append(m.Fnc.Body.List, ret)
 	m.Fnc.Body.Rbrace = ret.End()
+
+	fmt.Println("imports:", len(imports))
+	decls := []ast.Decl{}
+	for _, imp := range imports {
+		// m.Fil.Imports = append(m.Fil.Imports, &ast.ImportSpec{Path: &ast.BasicLit{Kind: token.STRING, Value: imp}})
+		decls = append(decls, &ast.GenDecl{
+			Tok: token.IMPORT,
+			Specs: []ast.Spec{&ast.ImportSpec{
+				Path: &ast.BasicLit{Kind: token.STRING, Value: imp},
+			}},
+		})
+	}
+
+	m.Fil.Decls = append(decls, m.Fil.Decls...)
 }
 
 func selectField(obj *ast.Ident, fl *ast.Field) *ast.SelectorExpr {
@@ -125,19 +144,3 @@ func nameFromTag(fl *ast.Field) string {
 
 	return ""
 }
-
-// func conversion() ast.Stmt {
-// 	// Type-check the package.
-// 	// We create an empty map for each kind of input
-// 	// we're interested in, and Check populates them.
-// 	info := types.Info{
-// 		Types: make(map[ast.Expr]types.TypeAndValue),
-// 		Defs:  make(map[*ast.Ident]types.Object),
-// 		Uses:  make(map[*ast.Ident]types.Object),
-// 	}
-// 	var conf types.Config
-// 	pkg, err := conf.Check("fib", fset, []*ast.File{f}, &info)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }

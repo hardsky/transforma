@@ -1,0 +1,11 @@
+//+build !transforma
+
+package strToInt
+
+import "strconv"
+
+func mapperAB(a *A) *B {
+	res := &B{}
+	res.Field, _ = strconv.Atoi(a.Field)
+	return res
+}
