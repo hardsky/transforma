@@ -1,0 +1,19 @@
+//+build !transforma
+
+package sameStructs
+
+import (
+	"github.com/hardsky/transforma/internal/transforma/test-data/different-packages/different"
+)
+
+func mapFooToBar(foo *Foo) *different.Bar {
+	res := &different.Bar{}
+	res.X = foo.X
+	return res
+}
+
+func mapBarToFoo(bar *different.Bar) *Foo {
+	res := &Foo{}
+	res.X = bar.X
+	return res
+}

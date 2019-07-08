@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestGenerateAnyNames(t *testing.T) {
+func TestGenerate(t *testing.T) {
 	testDataDir := "./test-data"
 	gotFile := "mapper_gen.go"
 	wantFile := "mapper-want.txt"
@@ -17,13 +17,14 @@ func TestGenerateAnyNames(t *testing.T) {
 		"same-structs",
 		"skip-field",
 		"str-to-int",
+		"different-packages",
 	}
 
 	for _, c := range cases {
 		pkgPath := filepath.Join(testDataDir, c)
 		// t.Log("package:", pkgPath)
 
-		err := Generate("./" + pkgPath)
+		err := Generate("./" + pkgPath + "/...") // current pkg and nested packages
 		if err != nil {
 			t.Error(err)
 			continue

@@ -104,7 +104,10 @@ func findFieldByTag(src *ast.StructType, fieldName string) *ast.Field {
 	return nil
 }
 
+// name can be 'A' or 'A.B' and further chain
 func findFieldByName(src *ast.StructType, name string) *ast.Field {
+	// names := strings.Split(name, ".")
+
 	for _, fl := range src.Fields.List {
 		if fl.Names[0].Name == name {
 			return fl
@@ -125,6 +128,7 @@ func define(x *ast.Ident, tp *ast.Field) *ast.AssignStmt {
 	return &ast.AssignStmt{Lhs: []ast.Expr{x}, Tok: token.DEFINE, Rhs: []ast.Expr{right}}
 }
 
+// can return 'A' or 'A.B' for nested structs
 func nameFromTag(fl *ast.Field) string {
 	if fl.Tag == nil {
 		return ""

@@ -70,16 +70,23 @@ func (p *analyzer) findMappers(fset *token.FileSet, f *ast.File) []*mapper {
 
 func (p *analyzer) findType(fl *ast.Field) *ast.StructType {
 
-	name := typeName(fl)
+	name := typeName(fl.Type)
+
+	// log.Println("findType name:", name.Name)
 
 	for _, pkg := range p.pkgs {
+		// log.Println("findType pkg name:", pkg.Name)
 		for _, f := range pkg.Syntax {
 			// TODO: use f.Scope
 			for _, dcl := range f.Decls {
 				if t, ok := dcl.(*ast.GenDecl); ok && t.Tok == token.TYPE {
-
-					if tp, ok := t.Specs[0].(*ast.TypeSpec); ok && tp.Name.Name == name.Name {
-						return tp.Type.(*ast.StructType)
+					for _, s := range t.Specs {
+						if tp, ok := s.(*ast.TypeSpec); ok {
+							// log.Println("findType pkg type name:", tp.Name.Name)
+							if tp.Name.Name == name.Name {
+								return tp.Type.(*ast.StructType)
+							}
+						}
 					}
 				}
 
@@ -90,12 +97,14 @@ func (p *analyzer) findType(fl *ast.Field) *ast.StructType {
 	return nil
 }
 
-func typeName(tp *ast.Field) *ast.Ident {
-	switch v := tp.Type.(type) {
+func typeName(tp ast.Expr) *ast.Ident {
+	switch v := tp.(type) {
 	case *ast.StarExpr: // *B
-		return v.X.(*ast.Ident)
+		return typeName(v.X)
 	case *ast.Ident: // B
 		return v
+	case *ast.SelectorExpr: // pkg.B
+		return typeName(v.Sel)
 	}
 
 	return &ast.Ident{}
